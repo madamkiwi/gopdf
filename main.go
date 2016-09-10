@@ -8,10 +8,6 @@ import (
 	"strings"
 )
 
-const bufsize int = 512
-const dbsize int = 256
-const config string = "config"
-
 type Opts struct {
 	startPage  int
 	endPage    int
@@ -32,27 +28,89 @@ func main() {
 			usage()
 			return
 		}
-		inputFile := fmt.Sprintf("%s.pdf", string(os.Args[2]))
-		outputFile := fmt.Sprintf("%s.pdf", string(os.Args[5]))
-		startPage, _ := strconv.Atoi(string(os.Args[3]))
-		endPage, _ := strconv.Atoi(string(os.Args[4]))
+		inputFile := fmt.Sprintf("%s.pdf", os.Args[2])
+		outputFile := fmt.Sprintf("%s.pdf", os.Args[5])
+		startPage, _ := strconv.Atoi(os.Args[3])
+		endPage, _ := strconv.Atoi(os.Args[4])
 		split(inputFile, startPage, endPage, outputFile)
 	case op == "m" || op == "merge":
 		if len(os.Args) < 4 {
 			usage()
 			return
 		}
-		merge(string(os.Args[2]), string(os.Args[3]))
+		merge(os.Args[2], os.Args[3])
 	case op == "p" || op == "process":
+		if len(os.Args) < 5 {
+			usage()
+			return
+		}
+		os.Mkdir("./Complete", 0777)
+		os.Mkdir("./Incomplete", 0777)
+		process(os.Args...)
 	}
 
 }
 
-func split(inputFile string, startPage int, endPage int, outputFile string) {
+func process(args ...string) {
+	var (
+		outputFile string
+		startPage, endPage  int
+		dirpath    string
+	)
+
+	inputFile := fmt.Sprintf("%s.pdf", args[2])
+
+	fmt.Println("processing input file %s", inputFile)
+	idx := 0
+	for _, _ = range args {
+		if idx >= len(args) {
+			return
+		}
+		if idx < 3 {
+			idx++
+			continue
+		}
+		startPage, _ = strconv.Atoi(args[idx])
+		idx++
+		outputFile = fmt.Sprintf("%s.pdf", args[idx])
+		idx++
+		switch {
+		case args[idx] == "c" || args[idx] == "C":
+			dirpath = "./Complete"
+		case args[idx] == "i" || args[idx] == "I":
+			dirpath = "./Incomplete"
+		default:
+			fmt.Println("expecting-c-or-i-but-got %s", args[idx])
+			return
+		}
+		idx++
+		if idx >= len(args) {
+			endPage = totalPages(inputFile)
+		} else {
+			endPage, _ = strconv.Atoi(args[idx])
+			endPage = endPage - 1
+		}
+		fmt.Printf("%s (p.%d-p.%d) -> %s\n", inputFile, startPage, endPage, fmt.Sprintf("%s/%s", dirpath, outputFile))
+		err := split(inputFile, startPage, endPage, fmt.Sprintf("%s/%s", dirpath, outputFile))
+		if err != nil {
+			return
+		}
+	}
+
+}
+
+func totalPages(file string) int{
+	output, _ := exec.Command("gs", "-q", "-dNODISPLAY", "-c", fmt.Sprintf("(%s) (r) file runpdfbegin pdfpagecount = quit", file)).Output()
+	page, _:= strconv.Atoi(strings.Replace(string(output), "\n", "", -1))
+
+	return page
+}
+
+func split(inputFile string, startPage int, endPage int, outputFile string) error {
 	_, err := os.Stat(inputFile)
 	if err != nil || inputFile == outputFile {
 		fmt.Println("input-and-output-are-the-same %s", err)
-		return
+		return err
 	}
 	args := strings.Split(
 		fmt.Sprintf("-dNOPAUSE -dBATCH -sOutputFile=%s -dFirstPage=%d -dLastPage=%d -sDEVICE=pdfwrite %s",
@@ -60,9 +118,9 @@ func split(inputFile string, startPage int, endPage int, outputFile string) {
 	_, err = exec.Command("gs", args...).Output()
 	if err != nil {
 		fmt.Println("split-err %s", err)
-		return
+		return err
 	}
-
+	return nil
 }
 
 func merge(inputDir string, outputFile string) {
