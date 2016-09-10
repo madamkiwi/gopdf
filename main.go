@@ -125,7 +125,7 @@ func split(inputFile string, startPage int, endPage int, outputFile string) erro
 
 func merge(inputDir string, outputFile string) {
 	_, err := os.Stat(inputDir)
-	if err != nil || inputDir == outputFile {
+	if err != nil || inputDir == fmt.Sprintf("%s.pdf", outputFile) {
 		fmt.Println("input-and-output-are-the-same %s", err)
 		return
 	}
