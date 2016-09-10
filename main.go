@@ -53,9 +53,9 @@ func main() {
 
 func process(args ...string) {
 	var (
-		outputFile string
-		startPage, endPage  int
-		dirpath    string
+		outputFile         string
+		startPage, endPage int
+		dirpath            string
 	)
 
 	inputFile := fmt.Sprintf("%s.pdf", args[2])
@@ -99,9 +99,9 @@ func process(args ...string) {
 
 }
 
-func totalPages(file string) int{
+func totalPages(file string) int {
 	output, _ := exec.Command("gs", "-q", "-dNODISPLAY", "-c", fmt.Sprintf("(%s) (r) file runpdfbegin pdfpagecount = quit", file)).Output()
-	page, _:= strconv.Atoi(strings.Replace(string(output), "\n", "", -1))
+	page, _ := strconv.Atoi(strings.Replace(string(output), "\n", "", -1))
 
 	return page
 }
@@ -139,7 +139,14 @@ func merge(inputDir string, outputFile string) {
 		if file.Name()[0] == '.' {
 			continue
 		}
-		mergelist = append(mergelist, fmt.Sprintf("%s/%s", inputDir, file.Name()))
+		oldpath := fmt.Sprintf("%s/%s", inputDir, file.Name())
+		newpath := fmt.Sprintf("%s/%s", inputDir, strings.Replace(file.Name(), " ", "", -1))
+		err = os.Rename(oldpath, newpath)
+		if err != nil {
+			fmt.Println("err-trimming-filename %s", err)
+			return
+		}
+		mergelist = append(mergelist, newpath)
 	}
 	if len(mergelist) == 0 {
 		return
