@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -26,17 +27,40 @@ func main() {
 	}
 	op := string(os.Args[1])
 	switch {
-	case op == "s":
-		if len(os.Args) < 5 {
+	case op == "s" || op == "split":
+		if len(os.Args) < 6 {
 			usage()
 			return
 		}
-	case op == "m":
+		inputFile := fmt.Sprintf("%s.pdf", string(os.Args[2]))
+		outputFile := fmt.Sprintf("%s.pdf", string(os.Args[3]))
+		startPage, _ := strconv.Atoi(string(os.Args[3]))
+		endPage, _ := strconv.Atoi(string(os.Args[4]))
+		split(inputFile, startPage, endPage, outputFile)
+	case op == "m" || op == "merge":
 		if len(os.Args) < 4 {
 			usage()
 			return
 		}
 		merge(string(os.Args[2]), string(os.Args[3]))
+	case op == "p" || op == "process":
+	}
+
+}
+
+func split(inputFile string, startPage int, endPage int, outputFile string) {
+	_, err := os.Stat(inputFile)
+	if err != nil || inputFile == outputFile {
+		fmt.Println("input-and-output-are-the-same %s", err)
+		return
+	}
+	args := strings.Split(
+		fmt.Sprintf("-dNOPAUSE -dBATCH -sOutputFile=%s -dFirstPage=%d -dLastPage=%d -sDEVICE=pdfwrite %s",
+			outputFile, startPage, endPage, inputFile), " ")
+	_, err = exec.Command("gs", args...).Output()
+	if err != nil {
+		fmt.Println("split-err %s", err)
+		return
 	}
 
 }
@@ -44,6 +68,7 @@ func main() {
 func merge(inputDir string, outputFile string) {
 	_, err := os.Stat(inputDir)
 	if err != nil || inputDir == outputFile {
+		fmt.Println("input-and-output-are-the-same %s", err)
 		return
 	}
 	dir, err := os.Open(inputDir)
@@ -73,8 +98,8 @@ func merge(inputDir string, outputFile string) {
 }
 
 func usage() {
-	fmt.Printf("\n\tprocess\t<input file>")
-	fmt.Printf("\n\tsplit\t<input file>\t<start page #>\t<end page #>\t<output file>")
 	fmt.Printf("\n\tmerge\t<input dir>\t<output file>")
+	fmt.Printf("\n\tsplit\t<input file>\t<start page #>\t<end page #>\t<output file>")
+	fmt.Printf("\n\tparse\t<input file>\t<start page #>\t<file>\t<C|I>\t<start page #>\t<file2>\t<C|I>...")
 	fmt.Printf("\n\n")
 }
