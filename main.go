@@ -33,7 +33,7 @@ func main() {
 			return
 		}
 		inputFile := fmt.Sprintf("%s.pdf", string(os.Args[2]))
-		outputFile := fmt.Sprintf("%s.pdf", string(os.Args[3]))
+		outputFile := fmt.Sprintf("%s.pdf", string(os.Args[5]))
 		startPage, _ := strconv.Atoi(string(os.Args[3]))
 		endPage, _ := strconv.Atoi(string(os.Args[4]))
 		split(inputFile, startPage, endPage, outputFile)
