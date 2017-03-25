@@ -39,19 +39,19 @@ func main() {
 			return
 		}
 		merge(os.Args[2], os.Args[3])
-	case op == "p" || op == "process":
+	case op == "p" || op == "parse":
 		if len(os.Args) < 5 {
 			usage()
 			return
 		}
 		os.Mkdir("./Complete", 0777)
 		os.Mkdir("./Incomplete", 0777)
-		process(os.Args...)
+		parse(os.Args...)
 	}
 
 }
 
-func process(args ...string) {
+func parse(args ...string) {
 	var (
 		outputFile         string
 		startPage, endPage int
@@ -60,7 +60,7 @@ func process(args ...string) {
 
 	inputFile := fmt.Sprintf("%s.pdf", args[2])
 
-	fmt.Println("processing input file %s", inputFile)
+	fmt.Println("parsing input file", inputFile)
 	idx := 0
 	for _, _ = range args {
 		if idx >= len(args) {
@@ -80,7 +80,7 @@ func process(args ...string) {
 		case args[idx] == "i" || args[idx] == "I":
 			dirpath = "./Incomplete"
 		default:
-			fmt.Println("expecting-c-or-i-but-got %s", args[idx])
+			fmt.Println("expecting-c-or-i-but-got", args[idx])
 			return
 		}
 		idx++
@@ -109,7 +109,7 @@ func totalPages(file string) int {
 func split(inputFile string, startPage int, endPage int, outputFile string) error {
 	_, err := os.Stat(inputFile)
 	if err != nil || inputFile == outputFile {
-		fmt.Println("input-and-output-are-the-same %s", err)
+		fmt.Println("input-and-output-are-the-same", err)
 		return err
 	}
 	args := strings.Split(
@@ -117,7 +117,7 @@ func split(inputFile string, startPage int, endPage int, outputFile string) erro
 			outputFile, startPage, endPage, inputFile), " ")
 	_, err = exec.Command("gs", args...).Output()
 	if err != nil {
-		fmt.Println("split-err %s", err)
+		fmt.Println("split-err", err)
 		return err
 	}
 	return nil
@@ -126,7 +126,7 @@ func split(inputFile string, startPage int, endPage int, outputFile string) erro
 func merge(inputDir string, outputFile string) {
 	_, err := os.Stat(inputDir)
 	if err != nil || inputDir == fmt.Sprintf("%s.pdf", outputFile) {
-		fmt.Println("input-and-output-are-the-same %s", err)
+		fmt.Println("input-and-output-are-the-same", err)
 		return
 	}
 	dir, err := os.Open(inputDir)
@@ -143,7 +143,7 @@ func merge(inputDir string, outputFile string) {
 		newpath := fmt.Sprintf("%s/%s", inputDir, strings.Replace(file.Name(), " ", "", -1))
 		err = os.Rename(oldpath, newpath)
 		if err != nil {
-			fmt.Println("err-trimming-filename %s", err)
+			fmt.Println("err-trimming-filename", err)
 			return
 		}
 		mergelist = append(mergelist, newpath)
@@ -157,7 +157,7 @@ func merge(inputDir string, outputFile string) {
 	_, err = exec.Command("gs", args...).Output()
 
 	if err != nil {
-		fmt.Println("merge-err %s", err)
+		fmt.Println("merge-err", err)
 		return
 	}
 }
