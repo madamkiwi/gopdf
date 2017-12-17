@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -151,6 +152,7 @@ func merge(inputDir string, outputFile string) {
 	if len(mergelist) == 0 {
 		return
 	}
+	sort.Strings(mergelist)
 	args := strings.Split(
 		fmt.Sprintf("-dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=%s.pdf %s",
 			outputFile, strings.Join(mergelist, " ")), " ")
